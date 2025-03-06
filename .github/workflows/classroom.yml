@@ -6,21 +6,12 @@ on:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
     steps:
     - name: Checkout Student Submission
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Debug Repository Structure
-      run: |
-        echo "Current Directory:"
-        pwd
-        echo "Repository Contents:"
-        ls -R /home/runner/work/
-
-    - name: Install Dependencies Manually
-      run: |
-        pip install GitPython pytest chardet  # Installing required packages individually
     
     - name: Activate All Branches
       run: |
@@ -29,9 +20,60 @@ jobs:
         git checkout feature-b || echo "feature-b not found"
         git checkout feature-c || echo "feature-c not found"
         git checkout main
-
-    - name: Python Autograder
-      id: python-test
-      run: pytest
+    - name: Test Merge feature-a
+      id: test-merge-a
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste Merge feature-a
+        setup-command: pip install GitPython pytest chardet
+        command: pytest tests/test_autograder.py::test_feature_a_merged
+        timeout: 10
+        max-score: 2
+    - name: Test Merge feature-b
+      id: test-merge-b
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste Merge feature-a
+        setup-command: pip install GitPython pytest chardet
+        command: pytest tests/test_autograder.py::test_feature_b_merged
+        timeout: 10
+        max-score: 2
+    - name: Test Squash feature-c
+      id: test-squash-c
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste Squash feature-c
+        setup-command: pip install GitPython pytest chardet
+        command: pytest tests/test_autograder.py::test_feature_c_squashed
+        timeout: 10
+        max-score: 2
+    - name: Test gitignore
+      id: test-gitignore
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste gitignore
+        setup-command: pip install GitPython pytest chardet
+        command: pytest tests/test_autograder.py::test_gitignore_updated
+        timeout: 10
+        max-score: 2
+    - name: Test config.txt
+      id: test-config
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste config.txt
+        setup-command: pip install GitPython pytest chardet
+        command: pytest tests/test_autograder.py::test_config_txt_restored
+        timeout: 10
+        max-score: 2
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        TEST-MERGE-A_RESULTS: "${{steps.test-merge-a.outputs.result}}"
+        TEST-MERGE-B_RESULTS: "${{steps.test-merge-b.outputs.result}}"
+        TEST-SQUASH-C_RESULTS: "${{steps.test-squash-c.outputs.result}}"
+        TEST-GITIGNORE_RESULTS: "${{steps.test-gitignore.outputs.result}}"
+        TEST-CONFIG_RESULTS:  "${{steps.test-config.outputs.result}}"
+      with:
+        runners: test-merge-a,test-merge-b,test-squash-c,test-gitignore,test-config
 
 
